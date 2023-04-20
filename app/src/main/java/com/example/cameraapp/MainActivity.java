@@ -2,7 +2,6 @@ package com.example.cameraapp;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,17 +22,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
-import android.net.Uri;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.os.Bundle;
-import android.util.Rational;
-import android.view.Surface;
-import android.view.TextureView;
-import android.view.View;
-import android.view.ViewGroup;
+import android.util.Log;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,31 +36,25 @@ import com.example.cameraapp.ml.Model;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.tensorflow.lite.DataType;
-import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.support.common.FileUtil;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     PreviewView imageView;
     Button button;
-    TextView textView;
+    TextView resultTextView;
     CardView cardView;
     PhotosDB db;
-
+    int width = 90, heigth = 120;
     int cameraFacing = CameraSelector.LENS_FACING_BACK;
     private final ActivityResultLauncher<String> activityResultLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
         @Override
@@ -87,10 +74,10 @@ public class MainActivity extends AppCompatActivity {
         db = PhotosDB.getInstance(this.getApplicationContext());
         imageView = findViewById(R.id.imageView);
         button = findViewById(R.id.button);
-        textView = findViewById(R.id.textView);
+        resultTextView = findViewById(R.id.textView);
         cardView = findViewById(R.id.cardView);
 
-        textView.setOnClickListener(view -> {
+        resultTextView.setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, list_of_photos.class);
             startActivity(intent);
         });
@@ -114,8 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 Preview preview = new Preview.Builder().setTargetAspectRatio(aspectRatio).build();
 
                 ImageCapture imageCapture = new ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                        //.setTargetRotation(getWindowManager().getDefaultDisplay().getRotation())
-                        .setTargetRotation(Surface.ROTATION_90)
+                        .setTargetRotation(getWindowManager().getDefaultDisplay().getRotation())
                         .build();
 
                 CameraSelector cameraSelector = new CameraSelector.Builder()
@@ -148,12 +134,14 @@ public class MainActivity extends AppCompatActivity {
                         //Toast.makeText(MainActivity.this, "Image saved at: " + file.getPath(), Toast.LENGTH_SHORT).show();
                         Photos photos = new Photos();
                         photos.path = file.getPath();
-                        photos.result = "Nothing";
                         try {
-                            Toast.makeText(MainActivity.this, "DAS IST " + processImage(file.getAbsoluteFile()), Toast.LENGTH_SHORT).show();
+                            String result = processImage(file.getAbsoluteFile());
+                            photos.result = result;
+                            resultTextView.setText(result);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
+                        //Toast.makeText(MainActivity.this, "DAS IST " + , Toast.LENGTH_SHORT).show();
                         db.photosDAO().insert(photos);
                     }
                 });
@@ -184,11 +172,39 @@ public class MainActivity extends AppCompatActivity {
 
     public String processImage(File image) throws IOException {
         try {
+
+
             Model model = Model.newInstance(getApplicationContext());
             Bitmap originalBitmap = null;
             FileInputStream stream = new FileInputStream(image);
             originalBitmap = BitmapFactory.decodeStream(stream);
             stream.close();
+
+            try {
+                ExifInterface exif = new ExifInterface(image.getAbsolutePath());
+                int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+                Log.d("EXIF", "Exif: " + orientation);
+                Matrix matrix = new Matrix();
+                if (orientation == 6) {
+                    matrix.postRotate(90);
+                }
+                else if (orientation == 3) {
+                    matrix.postRotate(180);
+                }
+                else if (orientation == 8) {
+                    matrix.postRotate(270);
+                }
+                originalBitmap = Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.getWidth(), originalBitmap.getHeight(), matrix, true); // rotating bitmap
+            }
+            catch (Exception e) {
+
+            }
+
+
+//            File file1 = new File(getExternalFilesDir(null), System.currentTimeMillis() + "Original" + ".jpg");
+//            OutputStream outputStream1 = new FileOutputStream(file1);
+//            originalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream1);
+//            outputStream1.close();
 
             // Обрезаем bitmap до соотношения сторон 3:4
             Bitmap resizedBitmap = null;
@@ -196,17 +212,6 @@ public class MainActivity extends AppCompatActivity {
             int originalHeight = originalBitmap.getHeight();
             float targetRatio = 3f / 4f;
             float originalRatio = (float) originalWidth / originalHeight;
-
-            File file1 = new File(getExternalFilesDir(null), System.currentTimeMillis() + "Original" + ".jpg");
-
-            // Открываем поток для записи изображения в файл
-            OutputStream outputStream1 = new FileOutputStream(file1);
-
-            // Конвертируем Bitmap в JPEG и записываем в поток
-            originalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream1);
-
-            // Закрываем поток
-            outputStream1.close();
             if (originalRatio > targetRatio) {
                 // нужно обрезать по горизонтали
                 int targetWidth = (int) (originalHeight * targetRatio);
@@ -220,39 +225,24 @@ public class MainActivity extends AppCompatActivity {
             }
             File file = new File(getExternalFilesDir(null), System.currentTimeMillis() + "beforeResize" + ".jpg");
 
-            // Открываем поток для записи изображения в файл
-            OutputStream outputStream = new FileOutputStream(file);
+            resizedBitmap = Bitmap.createScaledBitmap(resizedBitmap, width, heigth, true);
 
-            // Конвертируем Bitmap в JPEG и записываем в поток
-            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-
-            // Закрываем поток
-            outputStream.close();
-            resizedBitmap = Bitmap.createScaledBitmap(resizedBitmap, 90, 120, true);
-
-            File file2 = new File(getExternalFilesDir(null), System.currentTimeMillis() + ".jpg");
-
-            // Открываем поток для записи изображения в файл
-            OutputStream outputStream2 = new FileOutputStream(file2);
-
-            // Конвертируем Bitmap в JPEG и записываем в поток
-            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream2);
-
-            // Закрываем поток
-            outputStream2.close();
 
 
             // Creates inputs for reference.
-            TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 90, 120, 3}, DataType.FLOAT32);
-            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * 90 * 120 * 3);
+            TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, width, heigth, 3}, DataType.FLOAT32);
+            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * width * heigth * 3);
             byteBuffer.order(ByteOrder.nativeOrder());
-
-            int[] intValues = new int[90 * 120];
+            File file1 = new File(getExternalFilesDir(null), System.currentTimeMillis() + "final" + ".jpg");
+            OutputStream outputStream1 = new FileOutputStream(file1);
+            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream1);
+            outputStream1.close();
+            int[] intValues = new int[width * heigth];
             resizedBitmap.getPixels(intValues, 0, resizedBitmap.getWidth(), 0, 0, resizedBitmap.getWidth(), resizedBitmap.getHeight());
 
             int pix = 0;
-            for (int i = 0; i < 90; i++) {
-                for (int j = 0; j < 120; j++) {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < heigth; j++) {
                     int val = intValues[pix++];
                     byteBuffer.putFloat(((val >> 16) & 0xFF) * (1.f / 255));
                     byteBuffer.putFloat(((val >> 8) & 0xFF) * (1.f / 255));
