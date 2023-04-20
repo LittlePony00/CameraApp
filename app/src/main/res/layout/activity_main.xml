@@ -15,7 +15,9 @@
         android:layout_marginBottom="300dp"
         app:layout_constraintBottom_toTopOf="@+id/cardView"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="MissingConstraints" />
+        tools:ignore="MissingConstraints" >
+
+    </androidx.camera.view.PreviewView>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView"
@@ -47,6 +49,31 @@
             android:textColor="@color/white"
             android:text="@string/take_photo"
             />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="412dp"
+            android:layout_height="110dp"
+            android:layout_gravity="bottom|center"
+            android:text="TextView"
+            android:visibility="invisible" />
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="450px"
+            android:layout_height="600px"
+            android:visibility="invisible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@tools:sample/avatars" />
+
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/bar_chart"
+            android:layout_width="match_parent"
+            android:layout_height="161dp"
+            android:layout_gravity="bottom|center" />
+
+
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

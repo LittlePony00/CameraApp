@@ -27,12 +27,20 @@ import android.media.ExifInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.cameraapp.DB.Photos;
 import com.example.cameraapp.DB.PhotosDB;
 import com.example.cameraapp.ml.Model;
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.tensorflow.lite.DataType;
@@ -45,15 +53,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     PreviewView imageView;
     Button button;
-    TextView resultTextView;
+    TextView resultTextView, testView;
+    ImageView testOut;
     CardView cardView;
     PhotosDB db;
+
+    BarChart barChart;
+
     int width = 90, heigth = 120;
     int cameraFacing = CameraSelector.LENS_FACING_BACK;
     private final ActivityResultLauncher<String> activityResultLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
@@ -76,6 +89,11 @@ public class MainActivity extends AppCompatActivity {
         button = findViewById(R.id.button);
         resultTextView = findViewById(R.id.textView);
         cardView = findViewById(R.id.cardView);
+        testOut = findViewById(R.id.imageView2);
+        testView = findViewById(R.id.textView2);
+        barChart = findViewById(R.id.bar_chart);
+
+
 
         resultTextView.setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, list_of_photos.class);
@@ -215,22 +233,20 @@ public class MainActivity extends AppCompatActivity {
                 int startY = (originalHeight - targetHeight) / 2;
                 resizedBitmap = Bitmap.createBitmap(originalBitmap, 0, startY, originalWidth, targetHeight);
             }
-            File file = new File(getExternalFilesDir(null), System.currentTimeMillis() + "beforeResize" + ".jpg");
 
             resizedBitmap = Bitmap.createScaledBitmap(resizedBitmap, width, heigth, true);
-
+            testOut.setImageBitmap(resizedBitmap);
 
             // Creates inputs for reference.
             TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, width, heigth, 3}, DataType.FLOAT32);
             ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * width * heigth * 3);
             byteBuffer.order(ByteOrder.nativeOrder());
-            File file1 = new File(getExternalFilesDir(null), System.currentTimeMillis() + "final" + ".jpg");
-            OutputStream outputStream1 = new FileOutputStream(file1);
-            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream1);
-            outputStream1.close();
+//            File file1 = new File(getExternalFilesDir(null), System.currentTimeMillis() + "final" + ".jpg");
+//            OutputStream outputStream1 = new FileOutputStream(file1);
+//            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream1);
+//            outputStream1.close();
             int[] intValues = new int[width * heigth];
             resizedBitmap.getPixels(intValues, 0, resizedBitmap.getWidth(), 0, 0, resizedBitmap.getWidth(), resizedBitmap.getHeight());
-
             int pix = 0;
             for (int i = 0; i < width; i++) {
                 for (int j = 0; j < heigth; j++) {
@@ -249,14 +265,35 @@ public class MainActivity extends AppCompatActivity {
             float[] confidence = outputFeature0.getFloatArray();
             int maxPos = 0;
             float maxConfidence = 0;
+            String conf = "";
             for (int i = 0; i < confidence.length; i++) {
                 if (confidence[i] > maxConfidence) {
                     maxConfidence = confidence[i];
                     maxPos = i;
+
                 }
+                conf += confidence[i] + " ";
             }
             String[] classes = {"Dress", "Hat", "Pants", "Shirt", "Shoes", "Shorts", "Skirt", "Sweater", "TShirt"};
             model.close();
+            ArrayList<BarEntry> entries = new ArrayList<>();
+
+            for (int i = 0; i < confidence.length; i++) {
+                entries.add(new BarEntry(i, confidence[i]));
+            }
+            BarDataSet barDataSet = new BarDataSet(entries, "Label");
+            barDataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+
+            BarData barData = new BarData(barDataSet);
+            barData.setBarWidth(0.9f);
+
+            barChart.setData(barData);
+            XAxis xAxis = barChart.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+            xAxis.setLabelCount(9);
+            xAxis.setValueFormatter(new IndexAxisValueFormatter(classes));
+
+            //testView.setText(conf);
             return classes[maxPos];
         } catch (IOException e) {
             // TODO Handle the exception
