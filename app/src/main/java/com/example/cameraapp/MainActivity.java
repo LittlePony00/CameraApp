@@ -100,12 +100,9 @@ public class MainActivity extends AppCompatActivity {
 
                 Preview preview = new Preview.Builder().setTargetAspectRatio(aspectRatio).build();
 
-                ImageCapture imageCapture = new ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                        .setTargetRotation(getWindowManager().getDefaultDisplay().getRotation())
-                        .build();
+                ImageCapture imageCapture = new ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).setTargetRotation(getWindowManager().getDefaultDisplay().getRotation()).build();
 
-                CameraSelector cameraSelector = new CameraSelector.Builder()
-                        .requireLensFacing(cameraFacing).build();
+                CameraSelector cameraSelector = new CameraSelector.Builder().requireLensFacing(cameraFacing).build();
 
                 cameraProvider.unbindAll();
 
@@ -172,8 +169,6 @@ public class MainActivity extends AppCompatActivity {
 
     public String processImage(File image) throws IOException {
         try {
-
-
             Model model = Model.newInstance(getApplicationContext());
             Bitmap originalBitmap = null;
             FileInputStream stream = new FileInputStream(image);
@@ -187,16 +182,13 @@ public class MainActivity extends AppCompatActivity {
                 Matrix matrix = new Matrix();
                 if (orientation == 6) {
                     matrix.postRotate(90);
-                }
-                else if (orientation == 3) {
+                } else if (orientation == 3) {
                     matrix.postRotate(180);
-                }
-                else if (orientation == 8) {
+                } else if (orientation == 8) {
                     matrix.postRotate(270);
                 }
                 originalBitmap = Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.getWidth(), originalBitmap.getHeight(), matrix, true); // rotating bitmap
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
 
             }
 
@@ -226,7 +218,6 @@ public class MainActivity extends AppCompatActivity {
             File file = new File(getExternalFilesDir(null), System.currentTimeMillis() + "beforeResize" + ".jpg");
 
             resizedBitmap = Bitmap.createScaledBitmap(resizedBitmap, width, heigth, true);
-
 
 
             // Creates inputs for reference.
