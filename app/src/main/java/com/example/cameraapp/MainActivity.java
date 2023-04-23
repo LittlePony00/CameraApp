@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
         barChart = findViewById(R.id.bar_chart);
 
 
-
         resultTextView.setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, list_of_photos.class);
             startActivity(intent);
@@ -216,25 +215,25 @@ public class MainActivity extends AppCompatActivity {
 //            originalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream1);
 //            outputStream1.close();
 
-            // Обрезаем bitmap до соотношения сторон 3:4
+//            // Обрезаем bitmap до соотношения сторон 3:4
             Bitmap resizedBitmap = null;
-            int originalWidth = originalBitmap.getWidth();
-            int originalHeight = originalBitmap.getHeight();
-            float targetRatio = 3f / 4f;
-            float originalRatio = (float) originalWidth / originalHeight;
-            if (originalRatio > targetRatio) {
-                // нужно обрезать по горизонтали
-                int targetWidth = (int) (originalHeight * targetRatio);
-                int startX = (originalWidth - targetWidth) / 2;
-                resizedBitmap = Bitmap.createBitmap(originalBitmap, startX, 0, targetWidth, originalHeight);
-            } else {
-                // нужно обрезать по вертикали
-                int targetHeight = (int) (originalWidth / targetRatio);
-                int startY = (originalHeight - targetHeight) / 2;
-                resizedBitmap = Bitmap.createBitmap(originalBitmap, 0, startY, originalWidth, targetHeight);
-            }
-
-            resizedBitmap = Bitmap.createScaledBitmap(resizedBitmap, width, heigth, true);
+//            int originalWidth = originalBitmap.getWidth();
+//            int originalHeight = originalBitmap.getHeight();
+//            float targetRatio = 3f / 4f;
+//            float originalRatio = (float) originalWidth / originalHeight;
+//            if (originalRatio > targetRatio) {
+//                // нужно обрезать по горизонтали
+//                int targetWidth = (int) (originalHeight * targetRatio);
+//                int startX = (originalWidth - targetWidth) / 2;
+//                resizedBitmap = Bitmap.createBitmap(originalBitmap, startX, 0, targetWidth, originalHeight);
+//            } else {
+//                // нужно обрезать по вертикали
+//                int targetHeight = (int) (originalWidth / targetRatio);
+//                int startY = (originalHeight - targetHeight) / 2;
+//                resizedBitmap = Bitmap.createBitmap(originalBitmap, 0, startY, originalWidth, targetHeight);
+//            }
+//
+            resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, heigth, true);
             testOut.setImageBitmap(resizedBitmap);
 
             // Creates inputs for reference.
