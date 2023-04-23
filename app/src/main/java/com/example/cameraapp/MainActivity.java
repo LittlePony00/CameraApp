@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 conf += confidence[i] + " ";
             }
-            String[] classes = {"Dress", "Hat", "Pants", "Shoes", "Shorts", "TShirt"};
+            String[] classes = {"Hat", "Pants", "Shoes", "Shorts", "TShirt"};
             model.close();
             ArrayList<BarEntry> entries = new ArrayList<>();
 
