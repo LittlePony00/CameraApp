@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     BarChart barChart;
 
-    int width = 90, heigth = 120;
+    int width = 180, heigth = 240;
     int cameraFacing = CameraSelector.LENS_FACING_BACK;
     private final ActivityResultLauncher<String> activityResultLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
         @Override
@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 conf += confidence[i] + " ";
             }
-            String[] classes = {"Dress", "Hat", "Pants", "Shirt", "Shoes", "Shorts", "Skirt", "Sweater", "TShirt"};
+            String[] classes = {"Dress", "Hat", "Pants", "Shoes", "Shorts", "TShirt"};
             model.close();
             ArrayList<BarEntry> entries = new ArrayList<>();
 
