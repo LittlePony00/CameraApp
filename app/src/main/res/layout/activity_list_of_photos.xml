@@ -29,6 +29,7 @@
         android:layout_height="wrap_content"
         android:text="DELETE"
         android:textSize="25sp"
+        android:layout_margin="16dp"
         android:textColor="@color/white"
         android:backgroundTint="@color/black"
         app:layout_constraintBottom_toTopOf="@id/backButton"/>
@@ -41,6 +42,7 @@
         android:backgroundTint="@color/black"
         android:gravity="center|center_horizontal"
         android:text="BACK"
+        android:layout_margin="16dp"
         android:textColor="@color/white"
         android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -33,6 +33,11 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
         notifyDataSetChanged();
     }
 
+    public void deleteItem(int position){
+        this.photosList.remove(position);
+        notifyItemRemoved(position);
+    }
+
     @NonNull
     @Override
     public CustomViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
