@@ -57,11 +57,10 @@ public class list_of_photos extends AppCompatActivity {
                         throw new RuntimeException(e);
                     }
                     db.photosDAO().delete(photosList.get(0));
+                    photosList = db.photosDAO().getAllPhotos();
+                    customAdapter.deleteItem(0);
                 }
             }
-
-            photosList = db.photosDAO().getAllPhotos();
-            customAdapter.deleteItem(0);
         });
     }
 

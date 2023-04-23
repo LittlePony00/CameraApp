@@ -17,6 +17,7 @@ import com.example.cameraapp.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Handler;
 
 public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomViewHolder> {
     Context context;
@@ -55,8 +56,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
                 holder.textView.setVisibility(View.INVISIBLE);
                 view.animate().scaleX(4.0f).scaleY(3.0f).setDuration(500);}
             if (isImageScaled) {
+                view.animate().scaleX(1f).scaleY(1f).setDuration(500);
                 holder.textView.setVisibility(View.VISIBLE);
-                view.animate().scaleX(1f).scaleY(1f).setDuration(500);}
+
+            }
             isImageScaled = !isImageScaled;
         });
     }

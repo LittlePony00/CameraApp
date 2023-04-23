@@ -21,6 +21,9 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.media.Image;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.TextureView;
@@ -34,9 +37,16 @@ import android.widget.Toast;
 
 import com.example.cameraapp.DB.Photos;
 import com.example.cameraapp.DB.PhotosDB;
+import com.example.cameraapp.ml.Model;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import org.tensorflow.lite.DataType;
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
+
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -48,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     TextView textView;
     CardView cardView;
     PhotosDB db;
+    int[] size = new int[] {180, 240};
 
     int cameraFacing = CameraSelector.LENS_FACING_BACK;
     private final ActivityResultLauncher<String> activityResultLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
@@ -125,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Image saved at: " + file.getPath(), Toast.LENGTH_SHORT).show();
                         Photos photos = new Photos();
                         photos.path = file.getPath();
-                        photos.result = "Nothing";
+                        photos.result = modelTF();
 
                         db.photosDAO().insert(photos);
                     }
@@ -152,5 +163,63 @@ public class MainActivity extends AppCompatActivity {
             return AspectRatio.RATIO_4_3;
         }
         return AspectRatio.RATIO_16_9;
+    }
+
+
+    private String modelTF() {
+        Bitmap image = (Bitmap) imageView.getBitmap();
+        int dimension = Math.min(image.getWidth(), image.getHeight());
+        image = ThumbnailUtils.extractThumbnail(image, dimension, dimension);
+        image = Bitmap.createScaledBitmap(image, size[1], size[0], false);
+        return classifyImage(image);
+    }
+
+    private String classifyImage(Bitmap image) {
+        String[] classes = new String[0];
+        int maxPos = 0;
+        try {
+            Model model = Model.newInstance(getApplicationContext());
+
+            // Creates inputs for reference.
+            TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 180, 240, 3}, DataType.FLOAT32);
+            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * size[0] * size[1] * 3);
+            byteBuffer.order(ByteOrder.nativeOrder());
+
+            int[] values = new int[size[0] * size[1]];
+            image.getPixels(values, 0, image.getWidth(), 0, 0, image.getWidth(), image.getHeight());
+            int pixel = 0;
+            for (int i = 0; i < size[0]; i++){
+                for (int j = 0; j < size[1]; j++){
+                    int val = values[pixel++];
+                    byteBuffer.putFloat(((val >> 16) & 0xFF) * (1.f / 255.f));
+                    byteBuffer.putFloat(((val >> 8) & 0xFF) * (1.f / 255.f));
+                    byteBuffer.putFloat((val & 0xFF) * (1.f / 255.f));
+                }
+            }
+
+            inputFeature0.loadBuffer(byteBuffer);
+
+            Model.Outputs outputs = model.process(inputFeature0);
+            TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
+
+            float[] confidences = outputFeature0.getFloatArray();
+            maxPos = 0;
+            float maxConfidence = 0;
+            for (int i = 0; i < confidences.length; i++) {
+                if (confidences[i] > maxConfidence){
+                    maxConfidence = confidences[i];
+                    maxPos = i;
+                }
+            }
+
+            classes = new String[] {"dress", "hats", "pants", "shoes", "shorts", "tshirt"};
+            textView.setText(classes[maxPos]);
+            // Releases model resources if no longer used.
+            model.close();
+        } catch (IOException e) {
+            // TODO Handle the exception
+        }
+
+        return classes[maxPos];
     }
 }
