@@ -50,7 +50,7 @@ public class list_of_photos extends AppCompatActivity {
             if (photosList.size() != 0) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     try {
-                        Toast.makeText(this, "File was also deleted", Toast.LENGTH_LONG).show();
+                        //Toast.makeText(this, "File was also deleted", Toast.LENGTH_LONG).show();
                         Files.deleteIfExists(
                                 Paths.get(photosList.get(0).path));
                     } catch (IOException e) {

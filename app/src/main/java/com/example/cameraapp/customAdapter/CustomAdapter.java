@@ -52,13 +52,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
         holder.imageView.setImageURI(Uri.parse(photosList.get(position).path));
 
         holder.imageView.setOnClickListener(view -> {
-            if (!isImageScaled) {
-                holder.textView.setVisibility(View.INVISIBLE);
-                view.animate().scaleX(4.0f).scaleY(3.0f).setDuration(500);}
-            if (isImageScaled) {
+            if (view.getScaleX() != 2.0f) {
+                view.animate().scaleX(2.0f).scaleY(2.0f).setDuration(500);}
+            else {
                 view.animate().scaleX(1f).scaleY(1f).setDuration(500);
-                holder.textView.setVisibility(View.VISIBLE);
-
             }
             isImageScaled = !isImageScaled;
         });

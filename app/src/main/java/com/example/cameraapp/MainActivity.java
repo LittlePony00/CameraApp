@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(MainActivity.this, "Image saved at: " + file.getPath(), Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "Image saved at: " + file.getPath(), Toast.LENGTH_SHORT).show();
                         Photos photos = new Photos();
                         photos.path = file.getPath();
                         photos.result = modelTF();
@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(MainActivity.this, "Failed to save: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "Failed to save: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
                 startCamera(cameraFacing);
@@ -174,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
         return classifyImage(image);
     }
 
+    @SuppressLint("SetTextI18n")
     private String classifyImage(Bitmap image) {
         String[] classes = new String[0];
         int maxPos = 0;
@@ -212,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            classes = new String[] {"dress", "hats", "pants", "shoes", "shorts", "tshirt"};
+            classes = new String[] {"Dress", "Hat", "Pants", "Shoes", "Shorts", "T-shirt"};
             textView.setText(classes[maxPos]);
             // Releases model resources if no longer used.
             model.close();
